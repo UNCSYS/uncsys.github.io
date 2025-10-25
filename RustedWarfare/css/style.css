@@ -171,22 +171,33 @@ header h1 i {
     font-style: italic;
 }
 
+/* 时间线轨道容器样式 */
+.timeline-track-container {
+    overflow-x: auto;
+    overflow-y: hidden;
+    border-radius: 8px;
+    border: 2px solid #e9ecef;
+    margin: 20px 0;
+    scroll-behavior: smooth;
+}
+
 /* 时间线轨道样式 */
 .timeline-track {
     position: relative;
     height: 80px;
     background: #f8f9fa;
-    border-radius: 8px;
-    margin: 20px 0;
-    overflow-x: auto;
-    overflow-y: hidden;
-    border: 2px solid #e9ecef;
     cursor: grab;
     user-select: none;
+    transition: width 0.3s ease-out, transform 0.2s ease-out;
 }
 
 .timeline-track.dragging {
     cursor: grabbing;
+    transition: none; /* 拖拽时禁用过渡 */
+}
+
+.timeline-track.smooth-transition {
+    transition: width 0.3s ease-out, transform 0.2s ease-out;
 }
 
 .timeline-scale {
@@ -445,21 +456,21 @@ header h1 i {
 }
 
 /* 滚动条样式 */
-.timeline-track::-webkit-scrollbar {
+.timeline-track-container::-webkit-scrollbar {
     height: 8px;
 }
 
-.timeline-track::-webkit-scrollbar-track {
+.timeline-track-container::-webkit-scrollbar-track {
     background: #f1f1f1;
     border-radius: 4px;
 }
 
-.timeline-track::-webkit-scrollbar-thumb {
+.timeline-track-container::-webkit-scrollbar-thumb {
     background: #c1c1c1;
     border-radius: 4px;
 }
 
-.timeline-track::-webkit-scrollbar-thumb:hover {
+.timeline-track-container::-webkit-scrollbar-thumb:hover {
     background: #a8a8a8;
 }
 

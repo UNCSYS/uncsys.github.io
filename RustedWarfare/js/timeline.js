@@ -31,9 +31,8 @@ class TimelineManager {
 
         // 缩放控制
         $('#zoomLevel').on('input', (e) => {
-            this.zoomLevel = parseInt(e.target.value);
-            $('#zoomValue').text(this.zoomLevel + '%');
-            this.updateTimelineScales();
+            const newZoomLevel = parseInt(e.target.value);
+            this.smoothZoomTransition(newZoomLevel);
         });
 
         // 绑定拖拽事件
@@ -95,6 +94,56 @@ class TimelineManager {
         $('.timeline-track').removeClass('dragging');
     }
 
+    // 平滑缩放过渡
+    smoothZoomTransition(newZoomLevel) {
+        const oldZoomLevel = this.zoomLevel;
+        const zoomChange = newZoomLevel - oldZoomLevel;
+        
+        // 更新显示
+        $('#zoomValue').text(newZoomLevel + '%');
+        
+        // 保存当前滚动位置（基于百分比）
+        const tracks = $('.timeline-track');
+        const scrollPositions = [];
+        tracks.each((index, track) => {
+            const $track = $(track);
+            const scrollLeft = $track.scrollLeft();
+            const trackWidth = $track[0].scrollWidth;
+            const scrollPercentage = trackWidth > 0 ? scrollLeft / trackWidth : 0;
+            scrollPositions.push(scrollPercentage);
+        });
+        
+        // 应用新缩放级别
+        this.zoomLevel = newZoomLevel;
+        
+        // 使用动画更新所有时间线
+        this.updateTimelineScales();
+        
+        // 恢复滚动位置（基于百分比）
+        setTimeout(() => {
+            tracks.each((index, track) => {
+                const $track = $(track);
+                const trackWidth = $track[0].scrollWidth;
+                const newScrollLeft = scrollPositions[index] * trackWidth;
+                $track.scrollLeft(newScrollLeft);
+            });
+        }, 50);
+    }
+
+    // 改进的拖拽处理（带惯性效果）
+    handleDragging(e) {
+        if (!this.isDragging) return;
+        
+        const deltaX = e.clientX - this.dragStartX;
+        const track = $('.timeline-track.dragging');
+        
+        // 应用惯性效果
+        const inertiaFactor = 0.8; // 惯性系数
+        const newScrollLeft = this.dragStartScroll - deltaX * inertiaFactor;
+        
+        track.scrollLeft(newScrollLeft);
+    }
+
     // 计算垂直偏移量，基于日期信息
     calculateVerticalOffset(event) {
         // 使用日期信息生成伪随机偏移量
@@ -107,6 +156,28 @@ class TimelineManager {
         const offset = (hash % 30) - 15; // -15px 到 +15px 的范围
         
         return offset;
+    }
+
+    // 计算事件位置，基于年份和月份进行精确偏移
+    calculateEventPosition(event, minYear, yearRange, scaledWidth) {
+        // 基础位置（基于年份）
+        const basePosition = ((event.year - minYear) / yearRange) * (scaledWidth - 40) + 20;
+        
+        // 如果没有月份信息，直接返回基础位置
+        if (!event.month) {
+            return basePosition;
+        }
+        
+        // 计算月份偏移量（将一年分为12个月份段）
+        const monthOffset = (event.month - 1) / 12; // 0-1 的范围，表示在一年中的位置
+        
+        // 计算一年的宽度（在缩放后的时间线上）
+        const yearWidth = (scaledWidth - 40) / yearRange;
+        
+        // 应用月份偏移
+        const monthAdjustedPosition = basePosition + (monthOffset * yearWidth);
+        
+        return monthAdjustedPosition;
     }
 
     // 简单的哈希函数
@@ -232,8 +303,10 @@ class TimelineManager {
                 </div>
                 <div class="timeline-content ${timeline.expanded ? 'expanded' : ''}">
                     ${timeline.description ? `<div class="timeline-description">${timeline.description}</div>` : ''}
-                    <div class="timeline-track" id="track-${timeline.id}">
-                        <div class="timeline-scale" id="scale-${timeline.id}"></div>
+                    <div class="timeline-track-container">
+                        <div class="timeline-track" id="track-${timeline.id}">
+                            <div class="timeline-scale" id="scale-${timeline.id}"></div>
+                        </div>
                     </div>
                     <div class="events-container" id="events-${timeline.id}"></div>
                 </div>
@@ -434,7 +507,8 @@ class TimelineManager {
         const eventPositions = {};
         timeline.events.forEach(event => {
             if (event.year >= minYear && event.year <= adjustedMaxYear) {
-                const position = ((event.year - minYear) / yearRange) * (scaledWidth - 40) + 20;
+                // 计算基于月份的水平偏移
+                const position = this.calculateEventPosition(event, minYear, yearRange, scaledWidth);
                 const node = $(`<div class="event-node ${event.severity}" data-event-id="${event.id}"></div>`);
                 node.css('left', position + 'px');
                 
@@ -478,7 +552,7 @@ class TimelineManager {
                     时间跨度超过25年，仅显示最近25年的事件
                 </div>
             `);
-            trackElement.before(warning);
+            trackElement.parent().before(warning);
             timeline.hasShownWarning = true;
         }
     }

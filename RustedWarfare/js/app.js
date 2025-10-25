@@ -114,11 +114,11 @@ class RustWarfareApp {
         // 更新月份选项
         const monthSelect = $('#eventMonth');
         if (monthSelect.length === 0) return;
-        
+
         // 更新日期选项
         const daySelect = $('#eventDay');
         if (daySelect.length === 0) return;
-        
+
         // 根据选择的月份更新日期选项
         const selectedMonth = parseInt(monthSelect.val());
         if (selectedMonth) {
@@ -132,12 +132,12 @@ class RustWarfareApp {
         const currentDay = parseInt(daySelect.val());
         daySelect.empty();
         daySelect.append('<option value="">选择日期</option>');
-        
+
         const daysInMonth = new Date(year, month, 0).getDate();
         for (let day = 1; day <= daysInMonth; day++) {
             daySelect.append(`<option value="${day}">${day}日</option>`);
         }
-        
+
         if (currentDay && currentDay <= daysInMonth) {
             daySelect.val(currentDay);
         }
@@ -165,12 +165,12 @@ class RustWarfareApp {
         const currentDay = parseInt(daySelect.val());
         daySelect.empty();
         daySelect.append('<option value="">选择日期</option>');
-        
+
         const daysInMonth = new Date(year, month, 0).getDate();
         for (let day = 1; day <= daysInMonth; day++) {
             daySelect.append(`<option value="${day}">${day}日</option>`);
         }
-        
+
         if (currentDay && currentDay <= daysInMonth) {
             daySelect.val(currentDay);
         }
@@ -257,7 +257,7 @@ class RustWarfareApp {
         };
 
         const success = timelineManager.updateEvent(timelineId, eventId, eventData);
-        
+
         if (success) {
             this.hideAllModals();
             dataManager.showNotification(`事件 "${title}" 修改成功！`, 'success');
@@ -274,7 +274,7 @@ class RustWarfareApp {
 
         if (confirm(`确定要删除事件 "${eventTitle}" 吗？此操作不可撤销。`)) {
             const success = timelineManager.deleteEvent(timelineId, eventId);
-            
+
             if (success) {
                 this.hideAllModals();
                 dataManager.showNotification(`事件 "${eventTitle}" 已删除！`, 'success');
@@ -303,7 +303,7 @@ class RustWarfareApp {
         timelineManager.createTimeline(name, color, description);
         this.hideAllModals();
         this.checkEmptyState();
-        
+
         dataManager.showNotification(`时间线 "${name}" 创建成功！`, 'success');
     }
 
@@ -356,7 +356,7 @@ class RustWarfareApp {
         };
 
         const event = timelineManager.addEvent(timelineManager.currentTimelineId, eventData);
-        
+
         if (event) {
             this.hideAllModals();
             dataManager.showNotification(`事件 "${title}" 添加成功！`, 'success');
@@ -369,13 +369,13 @@ class RustWarfareApp {
     showFormError(fieldId, message) {
         const field = $(`#${fieldId}`);
         field.addClass('error');
-        
+
         // 移除现有的错误消息
         field.next('.error-message').remove();
-        
+
         // 添加错误消息
         field.after(`<div class="error-message" style="color: #e74c3c; font-size: 12px; margin-top: 5px;">${message}</div>`);
-        
+
         // 移除错误状态
         setTimeout(() => {
             field.removeClass('error');
@@ -390,19 +390,19 @@ class RustWarfareApp {
             e.preventDefault();
             this.showAddTimelineModal();
         }
-        
+
         // Ctrl+S: 保存数据
         if (e.ctrlKey && e.key === 's') {
             e.preventDefault();
             dataManager.exportToTxt();
         }
-        
+
         // Ctrl+O: 加载数据
         if (e.ctrlKey && e.key === 'o') {
             e.preventDefault();
             $('#loadDataBtn').click();
         }
-        
+
         // Escape: 关闭模态框
         if (e.key === 'Escape') {
             this.hideAllModals();
@@ -434,7 +434,7 @@ class RustWarfareApp {
                 </div>
             `;
             $('#timelinesContainer').html(emptyStateHtml);
-            
+
             // 绑定示例数据按钮
             $('#loadSampleData').on('click', () => {
                 dataManager.generateSampleData();
@@ -467,10 +467,13 @@ class RustWarfareApp {
             `;
             $('.controls').append(demoControlsHtml);
 
-            // 绑定演示按钮事件
             $('#loadSampleBtn').on('click', () => {
-                dataManager.generateSampleData();
-                this.checkEmptyState();
+                if (confirm("确定要加载吗? 会清除你目前的内容!")) {
+                    dataManager.generateSampleData();
+                    this.checkEmptyState();
+                } else {
+                    // 执行取消操作
+                }
             });
 
             $('#clearAllBtn').on('click', () => {
@@ -487,7 +490,7 @@ class RustWarfareApp {
     // 搜索功能
     searchEvents(keyword) {
         const results = [];
-        
+
         timelineManager.timelines.forEach(timeline => {
             timeline.events.forEach(event => {
                 if (event.title.toLowerCase().includes(keyword.toLowerCase()) ||
@@ -515,7 +518,7 @@ class RustWarfareApp {
     getStatistics() {
         const totalTimelines = timelineManager.timelines.length;
         const totalEvents = timelineManager.timelines.reduce((sum, timeline) => sum + timeline.events.length, 0);
-        
+
         const severityCount = {
             low: 0,
             medium: 0,
@@ -549,7 +552,7 @@ class RustWarfareApp {
               • 高: ${stats.severityCount.high}
               • 关键: ${stats.severityCount.critical}
         `;
-        
+
         alert(message);
     }
 }
@@ -596,18 +599,18 @@ $(document).ready(() => {
 window.RustedWarfare = {
     // 获取应用实例
     getApp: () => window.app,
-    
+
     // 获取时间线管理器
     getTimelineManager: () => window.timelineManager,
-    
+
     // 获取数据管理器
     getDataManager: () => window.dataManager,
-    
+
     // 快速创建时间线
     quickCreateTimeline: (name, color = '#3498db') => {
         return timelineManager.createTimeline(name, color);
     },
-    
+
     // 快速添加事件
     quickAddEvent: (timelineId, year, title, severity = 'medium') => {
         return timelineManager.addEvent(timelineId, {
