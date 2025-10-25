@@ -1,0 +1,140 @@
+[
+  {
+    "id": "world_wars_timeline",
+    "name": "世界大战时间线",
+    "color": "#e74c3c",
+    "description": "记录两次世界大战及相关冲突的时间线",
+    "events": [
+      {
+        "id": "ww1_start",
+        "year": 1914,
+        "title": "第一次世界大战爆发",
+        "description": "奥匈帝国向塞尔维亚宣战，第一次世界大战开始",
+        "severity": "critical",
+        "tags": ["战争", "欧洲", "全球冲突"],
+        "createdAt": "2024-01-01T00:00:00.000Z"
+      },
+      {
+        "id": "ww1_end",
+        "year": 1918,
+        "title": "第一次世界大战结束",
+        "description": "德国签署停战协定，第一次世界大战正式结束",
+        "severity": "high",
+        "tags": ["战争结束", "和平条约"],
+        "createdAt": "2024-01-01T00:00:00.000Z"
+      },
+      {
+        "id": "ww2_start",
+        "year": 1939,
+        "title": "第二次世界大战爆发",
+        "description": "德国入侵波兰，第二次世界大战开始",
+        "severity": "critical",
+        "tags": ["战争", "全球冲突", "纳粹德国"],
+        "createdAt": "2024-01-01T00:00:00.000Z"
+      },
+      {
+        "id": "ww2_end",
+        "year": 1945,
+        "title": "第二次世界大战结束",
+        "description": "日本投降，第二次世界大战正式结束",
+        "severity": "high",
+        "tags": ["战争结束", "和平", "联合国成立"],
+        "createdAt": "2024-01-01T00:00:00.000Z"
+      }
+    ],
+    "expanded": true,
+    "createdAt": "2024-01-01T00:00:00.000Z"
+  },
+  {
+    "id": "tech_timeline",
+    "name": "科技发展时间线",
+    "color": "#3498db",
+    "description": "记录重要科技突破和发展的时间线",
+    "events": [
+      {
+        "id": "transistor",
+        "year": 1947,
+        "title": "晶体管发明",
+        "description": "贝尔实验室发明晶体管，开启电子时代",
+        "severity": "high",
+        "tags": ["电子", "发明", "贝尔实验室"],
+        "createdAt": "2024-01-01T00:00:00.000Z"
+      },
+      {
+        "id": "internet_born",
+        "year": 1969,
+        "title": "互联网诞生",
+        "description": "ARPANET建立，互联网的前身",
+        "severity": "critical",
+        "tags": ["互联网", "网络", "通信"],
+        "createdAt": "2024-01-01T00:00:00.000Z"
+      },
+      {
+        "id": "iphone_release",
+        "year": 2007,
+        "title": "iPhone发布",
+        "description": "苹果发布第一代iPhone，开启智能手机时代",
+        "severity": "high",
+        "tags": ["智能手机", "苹果", "移动计算"],
+        "createdAt": "2024-01-01T00:00:00.000Z"
+      },
+      {
+        "id": "ai_breakthrough",
+        "year": 2012,
+        "title": "深度学习突破",
+        "description": "AlexNet在ImageNet竞赛中取得突破性成果",
+        "severity": "high",
+        "tags": ["人工智能", "深度学习", "神经网络"],
+        "createdAt": "2024-01-01T00:00:00.000Z"
+      }
+    ],
+    "expanded": false,
+    "createdAt": "2024-01-01T00:00:00.000Z"
+  },
+  {
+    "id": "space_timeline",
+    "name": "太空探索时间线",
+    "color": "#9b59b6",
+    "description": "记录人类太空探索的重要里程碑",
+    "events": [
+      {
+        "id": "sputnik",
+        "year": 1957,
+        "title": "斯普特尼克1号发射",
+        "description": "苏联发射第一颗人造地球卫星",
+        "severity": "high",
+        "tags": ["太空", "卫星", "苏联"],
+        "createdAt": "2024-01-01T00:00:00.000Z"
+      },
+      {
+        "id": "gagarin",
+        "year": 1961,
+        "title": "加加林进入太空",
+        "description": "尤里·加加林成为第一个进入太空的人类",
+        "severity": "critical",
+        "tags": ["太空", "宇航员", "苏联"],
+        "createdAt": "2024-01-01T00:00:00.000Z"
+      },
+      {
+        "id": "moon_landing",
+        "year": 1969,
+        "title": "阿波罗11号登月",
+        "description": "尼尔·阿姆斯特朗成为第一个在月球上行走的人类",
+        "severity": "critical",
+        "tags": ["月球", "NASA", "美国"],
+        "createdAt": "2024-01-01T00:00:00.000Z"
+      },
+      {
+        "id": "iss_launch",
+        "year": 1998,
+        "title": "国际空间站开始建设",
+        "description": "国际空间站第一个模块发射升空",
+        "severity": "high",
+        "tags": ["空间站", "国际合作", "NASA"],
+        "createdAt": "2024-01-01T00:00:00.000Z"
+      }
+    ],
+    "expanded": false,
+    "createdAt": "2024-01-01T00:00:00.000Z"
+  }
+]
