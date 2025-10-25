@@ -181,6 +181,12 @@ header h1 i {
     overflow-x: auto;
     overflow-y: hidden;
     border: 2px solid #e9ecef;
+    cursor: grab;
+    user-select: none;
+}
+
+.timeline-track.dragging {
+    cursor: grabbing;
 }
 
 .timeline-scale {
@@ -263,6 +269,7 @@ header h1 i {
 .time-range-warning i {
     color: #f39c12;
 }
+
 
 /* 事件详情样式 */
 .event-details {
@@ -456,19 +463,6 @@ header h1 i {
     background: #a8a8a8;
 }
 
-/* 动画效果 */
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(20px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-
-.timeline {
-    animation: fadeIn 0.5s ease-out;
-}
-
-.event-details {
-    animation: fadeIn 0.3s ease-out;
-}
 
 /* 加载状态 */
 .loading {
@@ -487,4 +481,24 @@ header h1 i {
     font-size: 3rem;
     margin-bottom: 15px;
     opacity: 0.5;
+}
+
+/* 事件右键菜单样式 */
+.event-context-menu {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-size: 14px;
+}
+
+.event-context-menu .menu-item {
+    padding: 8px 12px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.event-context-menu .menu-item:hover {
+    background-color: #f8f9fa;
+}
+
+.event-context-menu .menu-item:not(:last-child) {
+    border-bottom: 1px solid #e9ecef;
 }

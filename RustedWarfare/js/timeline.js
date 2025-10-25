@@ -4,6 +4,10 @@ class TimelineManager {
         this.timelines = [];
         this.currentTimelineId = null;
         this.zoomLevel = 100;
+        this.scrollPosition = 0;
+        this.isDragging = false;
+        this.dragStartX = 0;
+        this.dragStartScroll = 0;
         this.init();
     }
 
@@ -31,6 +35,163 @@ class TimelineManager {
             $('#zoomValue').text(this.zoomLevel + '%');
             this.updateTimelineScales();
         });
+
+        // 绑定拖拽事件
+        this.bindDragEvents();
+    }
+
+    // 绑定拖拽事件
+    bindDragEvents() {
+        // 鼠标按下事件
+        $(document).on('mousedown', '.timeline-track', (e) => {
+            this.startDragging(e);
+        });
+
+        // 鼠标移动事件
+        $(document).on('mousemove', (e) => {
+            this.handleDragging(e);
+        });
+
+        // 鼠标释放事件
+        $(document).on('mouseup', (e) => {
+            this.stopDragging(e);
+        });
+
+        // 触摸事件支持
+        $(document).on('touchstart', '.timeline-track', (e) => {
+            this.startDragging(e.originalEvent.touches[0]);
+        });
+
+        $(document).on('touchmove', (e) => {
+            this.handleDragging(e.originalEvent.touches[0]);
+        });
+
+        $(document).on('touchend', (e) => {
+            this.stopDragging(e);
+        });
+    }
+
+    // 开始拖拽
+    startDragging(e) {
+        this.isDragging = true;
+        this.dragStartX = e.clientX;
+        const track = $(e.target).closest('.timeline-track');
+        this.dragStartScroll = track.scrollLeft();
+        track.addClass('dragging');
+    }
+
+    // 处理拖拽
+    handleDragging(e) {
+        if (!this.isDragging) return;
+        
+        const deltaX = e.clientX - this.dragStartX;
+        const track = $('.timeline-track.dragging');
+        track.scrollLeft(this.dragStartScroll - deltaX);
+    }
+
+    // 停止拖拽
+    stopDragging(e) {
+        this.isDragging = false;
+        $('.timeline-track').removeClass('dragging');
+    }
+
+    // 计算垂直偏移量，基于日期信息
+    calculateVerticalOffset(event) {
+        // 使用日期信息生成伪随机偏移量
+        let seed = event.year;
+        if (event.month) seed = seed * 31 + event.month;
+        if (event.day) seed = seed * 31 + event.day;
+        
+        // 使用简单的哈希函数生成偏移量 (-15px 到 +15px)
+        const hash = this.simpleHash(seed);
+        const offset = (hash % 30) - 15; // -15px 到 +15px 的范围
+        
+        return offset;
+    }
+
+    // 简单的哈希函数
+    simpleHash(num) {
+        return Math.abs((num * 9301 + 49297) % 233280) / 233280;
+    }
+
+    // 添加事件节点拖拽功能
+    enableEventDragging(timelineId) {
+        const timeline = this.timelines.find(t => t.id === timelineId);
+        if (!timeline) return;
+
+        $(`.event-node[data-event-id]`).each((index, element) => {
+            const eventId = $(element).data('event-id');
+            const event = timeline.events.find(e => e.id === eventId);
+            if (!event) return;
+
+            // 添加双击编辑功能
+            $(element).on('dblclick', () => {
+                app.showEditEventModal(eventId, timelineId);
+            });
+
+            // 添加右键菜单
+            $(element).on('contextmenu', (e) => {
+                e.preventDefault();
+                this.showEventContextMenu(e, eventId, timelineId);
+            });
+        });
+    }
+
+    // 显示事件右键菜单
+    showEventContextMenu(e, eventId, timelineId) {
+        // 移除现有的右键菜单
+        $('.event-context-menu').remove();
+
+        const menu = $(`
+            <div class="event-context-menu">
+                <div class="menu-item" data-action="edit">编辑事件</div>
+                <div class="menu-item" data-action="delete">删除事件</div>
+                <div class="menu-item" data-action="goto">转到时间轴</div>
+            </div>
+        `);
+
+        menu.css({
+            position: 'fixed',
+            left: e.pageX,
+            top: e.pageY,
+            background: 'white',
+            border: '1px solid #ddd',
+            borderRadius: '4px',
+            boxShadow: '0 2px 10px rgba(0,0,0,0.2)',
+            zIndex: 1000,
+            minWidth: '120px'
+        });
+
+        $('body').append(menu);
+
+        // 绑定菜单项点击事件
+        menu.find('.menu-item').on('click', (e) => {
+            const action = $(e.target).data('action');
+            this.handleContextMenuAction(action, eventId, timelineId);
+            menu.remove();
+        });
+
+        // 点击其他地方关闭菜单
+        $(document).one('click', () => {
+            menu.remove();
+        });
+    }
+
+    // 处理右键菜单操作
+    handleContextMenuAction(action, eventId, timelineId) {
+        switch (action) {
+            case 'edit':
+                app.showEditEventModal(eventId, timelineId);
+                break;
+            case 'delete':
+                if (confirm('确定要删除这个事件吗？')) {
+                    this.deleteEvent(timelineId, eventId);
+                }
+                break;
+            case 'goto':
+                this.goToTimeline(eventId, timelineId);
+                break;
+        }
     }
 
     // 创建新时间线
@@ -109,6 +270,12 @@ class TimelineManager {
             e.stopPropagation();
             const eventId = $(e.currentTarget).data('event-id');
             app.showEditEventModal(eventId, timelineId);
+        });
+
+        $(`.go-to-timeline-btn[data-timeline-id="${timelineId}"]`).on('click', (e) => {
+            e.stopPropagation();
+            const eventId = $(e.currentTarget).data('event-id');
+            this.goToTimeline(eventId, timelineId);
         });
     }
 
@@ -213,6 +380,9 @@ class TimelineManager {
                                 ${event.title}
                             </h4>
                             <div class="event-actions">
+                                <button class="btn btn-sm btn-outline go-to-timeline-btn" data-event-id="${event.id}" data-timeline-id="${timeline.id}">
+                                    <i class="fas fa-crosshairs"></i> 转到时间轴
+                                </button>
                                 <button class="btn btn-sm btn-outline edit-event-btn" data-event-id="${event.id}" data-timeline-id="${timeline.id}">
                                     <i class="fas fa-edit"></i> 编辑
                                 </button>
@@ -232,6 +402,9 @@ class TimelineManager {
 
         // 绑定编辑事件按钮
         this.bindEditEventButtons(timeline.id);
+        
+        // 启用事件节点交互功能
+        this.enableEventDragging(timeline.id);
     }
 
     // 更新时间线刻度
@@ -258,11 +431,16 @@ class TimelineManager {
         trackElement.css('width', scaledWidth + 'px');
 
         // 添加事件节点
+        const eventPositions = {};
         timeline.events.forEach(event => {
             if (event.year >= minYear && event.year <= adjustedMaxYear) {
                 const position = ((event.year - minYear) / yearRange) * (scaledWidth - 40) + 20;
                 const node = $(`<div class="event-node ${event.severity}" data-event-id="${event.id}"></div>`);
                 node.css('left', position + 'px');
+                
+                // 添加日期相关的垂直偏移，避免所有点都在一条直线上
+                const verticalOffset = this.calculateVerticalOffset(event);
+                node.css('top', `calc(50% + ${verticalOffset}px)`);
                 
                 // 添加月份指示器（如果有月份信息）
                 if (event.month) {
@@ -271,8 +449,14 @@ class TimelineManager {
                 }
                 
                 scaleElement.append(node);
+                
+                // 记录事件位置用于连接线
+                eventPositions[event.id] = position;
             }
         });
+
+        // 为相同标签的相邻事件添加连接线
+        this.addConnectionLines(timeline, eventPositions, scaledWidth, scaleElement);
 
         // 添加刻度标记（每年一个标记，只显示年份后两位）
         for (let year = minYear; year <= adjustedMaxYear; year++) {
@@ -286,8 +470,8 @@ class TimelineManager {
             scaleElement.append(mark);
         }
 
-        // 如果时间跨度超过25年，显示提示
-        if (maxYear - minYear > 24) {
+        // 如果时间跨度超过25年，显示提示（只在第一次渲染时显示）
+        if (maxYear - minYear > 24 && !timeline.hasShownWarning) {
             const warning = $(`
                 <div class="time-range-warning">
                     <i class="fas fa-exclamation-triangle"></i>
@@ -295,6 +479,7 @@ class TimelineManager {
                 </div>
             `);
             trackElement.before(warning);
+            timeline.hasShownWarning = true;
         }
     }
 
@@ -340,6 +525,165 @@ class TimelineManager {
                 eventElement.css('background', '');
             }, 2000);
         }
+
+        // 在时间轴上显示十字动画标注
+        this.showCrossAnimation(eventId, targetTimeline.id);
+    }
+
+    // 显示十字动画标注
+    showCrossAnimation(eventId, timelineId) {
+        // 移除现有的十字动画
+        $('.cross-animation').remove();
+
+        const eventNode = $(`.event-node[data-event-id="${eventId}"]`);
+        if (!eventNode.length) return;
+
+        const timelineTrack = $(`#track-${timelineId}`);
+        const nodePosition = eventNode.position();
+        const nodeWidth = eventNode.outerWidth();
+        const nodeHeight = eventNode.outerHeight();
+
+        // 创建十字动画元素
+        const crossAnimation = $(`
+            <div class="cross-animation">
+                <div class="cross-line horizontal"></div>
+                <div class="cross-line vertical"></div>
+            </div>
+        `);
+
+        timelineTrack.append(crossAnimation);
+
+        // 设置十字位置
+        const crossSize = 40;
+        crossAnimation.css({
+            position: 'absolute',
+            left: nodePosition.left + nodeWidth / 2 - crossSize / 2,
+            top: nodePosition.top + nodeHeight / 2 - crossSize / 2,
+            width: crossSize,
+            height: crossSize,
+            pointerEvents: 'none',
+            zIndex: 100
+        });
+
+        // 3秒后自动移除十字动画
+        setTimeout(() => {
+            crossAnimation.remove();
+        }, 3000);
+    }
+
+    // 为相同标签的相邻事件添加连接线
+    addConnectionLines(timeline, eventPositions, scaledWidth, scaleElement) {
+        // 移除现有的连接线
+        $('.connection-line').remove();
+
+        // 按标签分组事件
+        const eventsByTag = {};
+        timeline.events.forEach(event => {
+            event.tags.forEach(tag => {
+                if (!eventsByTag[tag]) {
+                    eventsByTag[tag] = [];
+                }
+                eventsByTag[tag].push(event);
+            });
+        });
+
+        // 为每个标签的事件添加连接线
+        Object.keys(eventsByTag).forEach(tag => {
+            const events = eventsByTag[tag];
+            if (events.length < 2) return;
+
+            // 按时间排序
+            events.sort((a, b) => this.compareEvents(a, b));
+
+            // 为相邻事件添加连接线
+            for (let i = 0; i < events.length - 1; i++) {
+                const currentEvent = events[i];
+                const nextEvent = events[i + 1];
+                
+                const currentPos = eventPositions[currentEvent.id];
+                const nextPos = eventPositions[nextEvent.id];
+                
+                if (currentPos && nextPos) {
+                    // 计算连接线位置和长度
+                    const startX = currentPos;
+                    const endX = nextPos;
+                    const lineWidth = endX - startX;
+                    
+                    // 根据事件的重要程度确定连接线颜色
+                    const severity = this.getHigherSeverity(currentEvent.severity, nextEvent.severity);
+                    const lineColor = this.getSeverityColor(severity);
+                    
+                    // 创建连接线
+                    const connectionLine = $(`
+                        <div class="connection-line ${severity}" data-tag="${tag}"></div>
+                    `);
+                    
+                    connectionLine.css({
+                        position: 'absolute',
+                        left: startX + 'px',
+                        top: '50%',
+                        width: lineWidth + 'px',
+                        height: '2px',
+                        background: lineColor,
+                        transform: 'translateY(-50%)',
+                        zIndex: 5,
+                        opacity: 0.7
+                    });
+                    
+                    scaleElement.append(connectionLine);
+                }
+            }
+        });
+    }
+
+    // 获取两个事件中较高的严重程度
+    getHigherSeverity(severity1, severity2) {
+        const severityLevels = {
+            'low': 1,
+            'medium': 2,
+            'high': 3,
+            'critical': 4
+        };
+        
+        const level1 = severityLevels[severity1] || 1;
+        const level2 = severityLevels[severity2] || 1;
+        
+        return level1 >= level2 ? severity1 : severity2;
+    }
+
+    // 获取严重程度对应的颜色
+    getSeverityColor(severity) {
+        const colors = {
+            'low': '#27ae60',
+            'medium': '#f39c12',
+            'high': '#e74c3c',
+            'critical': '#8e44ad'
+        };
+        return colors[severity] || '#3498db';
+    }
+
+    // 转到时间轴并显示十字动画
+    goToTimeline(eventId, timelineId) {
+        const timeline = this.timelines.find(t => t.id === timelineId);
+        if (!timeline) return;
+
+        // 展开时间线
+        if (!timeline.expanded) {
+            this.toggleTimeline(timelineId);
+        }
+
+        // 滚动到时间线位置
+        const timelineElement = $(`.timeline[data-id="${timelineId}"]`);
+        if (timelineElement.length) {
+            $('html, body').animate({
+                scrollTop: timelineElement.offset().top - 50
+            }, 500);
+        }
+
+        // 显示十字动画
+        setTimeout(() => {
+            this.showCrossAnimation(eventId, timelineId);
+        }, 600);
     }
 
     // 获取事件程度文本
