@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>祝福弹窗</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'PingFang SC', 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            color: #333;
+        }
+        
+        .container {
+            max-width: 500px;
+            width: 100%;
+            text-align: center;
+        }
+        
+        h1 {
+            margin-bottom: 20px;
+            color: #4a6baf;
+            font-size: 28px;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+        }
+        
+        .instructions {
+            background-color: rgba(255, 255, 255, 0.7);
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        .btn {
+            background: #4a6baf;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 50px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin: 5px;
+        }
+        
+        .btn:hover {
+            background: #3a5a9f;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
+        }
+        
+        .btn:active {
+            transform: translateY(0);
+        }
+        
+        .counter {
+            margin: 20px 0;
+            font-size: 16px;
+            color: #666;
+        }
+        
+        /* 弹窗样式 */
+        .blessing-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+        
+        .blessing-modal.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+        
+        .modal-content {
+            background: linear-gradient(135deg, #fff 0%, #f9f9f9 100%);
+            width: 85%;
+            max-width: 400px;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+            text-align: center;
+            position: relative;
+            transform: scale(0.8);
+            transition: transform 0.3s ease;
+        }
+        
+        .blessing-modal.active .modal-content {
+            transform: scale(1);
+        }
+        
+        .blessing-text {
+            font-size: 18px;
+            line-height: 1.6;
+            margin-bottom: 20px;
+            color: #444;
+        }
+        
+        .close-btn {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            font-size: 24px;
+            cursor: pointer;
+            color: #888;
+            transition: color 0.3s;
+        }
+        
+        .close-btn:hover {
+            color: #333;
+        }
+        
+        .decoration {
+            font-size: 40px;
+            margin-bottom: 15px;
+        }
+        
+        .footer {
+            margin-top: 30px;
+            color: #777;
+            font-size: 14px;
+        }
+        
+        /* 动画效果 */
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        .blessing-text {
+            animation: fadeIn 0.5s ease;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>✨ 祝福弹窗 ✨</h1>
+        
+        <div class="instructions">
+            <p>点击下方按钮，随机获取祝福话语</p>
+        </div>
+        
+        <div class="counter">
+            已显示祝福: <span id="counter">0</span> 次
+        </div>
+        
+        <button class="btn" id="showBlessing">显示祝福</button>
+        <button class="btn" id="autoShow">自动显示(5秒)</button>
+        
+        <div class="footer">
+            <p>每一次祝福都是美好的期许</p>
+        </div>
+    </div>
+    
+    <!-- 祝福弹窗 -->
+    <div class="blessing-modal" id="blessingModal">
+        <div class="modal-content">
+            <span class="close-btn" id="closeModal">&times;</span>
+            <div class="decoration">🎉</div>
+            <div class="blessing-text" id="blessingText">加载中...</div>
+            <button class="btn" id="nextBlessing">下一条祝福</button>
+        </div>
+    </div>
+    
+    <script>
+        // 祝福语数据 - 从PHP移到JavaScript中
+        const blessings = [
+            "愿你三冬暖，愿你春不寒，愿你天黑有灯，下雨有伞，愿你路上有良人相伴。",
+            "愿时光能缓，愿故人不散；愿你惦念的人能和你道晚安，愿你独闯的日子里不觉得孤单。",
+            "愿你所有快乐，无需假装，愿你此生尽兴，赤诚善良。",
+            "愿你的眼光，明媚不忧伤，不用奔赴大海，也能春暖花开。",
+            "愿你成为自己喜欢的样子，不抱怨，不将就，有自由，有光芒。",
+            "愿你以后的生活处处都有小幸运，岁月静好，安暖相伴。",
+            "愿你一生努力，一生被爱，想要的都拥有，得不到的都释怀。",
+            "愿你如阳光，明媚不忧伤；愿你如月光，明亮不清冷。",
+            "愿你所到之处，遍地阳光；愿你梦的远方，温暖为向。",
+            "愿你一生有山可靠，有树可栖，与心爱之人，春赏花，夏纳凉，秋登山，冬扫雪。",
+            "愿你一生欢喜，不为世俗所及。",
+            "愿你被这个世界温柔以待，躲不过的惊吓都只是一场虚惊，收到的欢喜从无空欢喜。",
+            "愿你往后路途，深情不再枉付。",
+            "愿你眼里有星辰，身边有微风，心中有暖阳。",
+            "愿你精致到老，眼里长着太阳，笑里全是坦荡。",
+            "愿你自强到无需有人宠有人惯，却依然幸运到有人宠有人惯。",
+            "愿你一生清澈明朗，做你愿做之事，爱你所爱之人。",
+            "愿你一生努力，一生被爱，最想要的都拥有，得不到的都释怀。",
+            "愿你如星君如月，夜夜流光相皎洁。",
+            "愿你无忧无疾百岁安生不离笑，盼你春暖花开一生喜乐幸福绕。"
+        ];
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const showBlessingBtn = document.getElementById('showBlessing');
+            const autoShowBtn = document.getElementById('autoShow');
+            const nextBlessingBtn = document.getElementById('nextBlessing');
+            const closeModalBtn = document.getElementById('closeModal');
+            const blessingModal = document.getElementById('blessingModal');
+            const blessingText = document.getElementById('blessingText');
+            const counterEl = document.getElementById('counter');
+            
+            let counter = 0;
+            let autoShowInterval = null;
+            let usedBlessings = []; // 记录已使用的祝福语索引
+            
+            // 获取随机祝福语
+            function getRandomBlessing() {
+                // 如果所有祝福语都已使用过，重置记录
+                if (usedBlessings.length >= blessings.length) {
+                    usedBlessings = [];
+                }
+                
+                let randomIndex;
+                do {
+                    randomIndex = Math.floor(Math.random() * blessings.length);
+                } while (usedBlessings.includes(randomIndex));
+                
+                // 记录已使用的祝福语
+                usedBlessings.push(randomIndex);
+                
+                // 更新UI
+                blessingText.textContent = blessings[randomIndex];
+                counter++;
+                counterEl.textContent = counter;
+                
+                // 随机装饰符号
+                const decorations = ['🎉', '✨', '🎁', '🎊', '💝', '🌸', '🌟', '💫'];
+                const randomDecoration = decorations[Math.floor(Math.random() * decorations.length)];
+                document.querySelector('.decoration').textContent = randomDecoration;
+            }
+            
+            // 显示弹窗
+            function showBlessingModal() {
+                getRandomBlessing();
+                blessingModal.classList.add('active');
+            }
+            
+            // 隐藏弹窗
+            function hideBlessingModal() {
+                blessingModal.classList.remove('active');
+            }
+            
+            // 自动显示弹窗
+            function startAutoShow() {
+                if (autoShowInterval) {
+                    clearInterval(autoShowInterval);
+                    autoShowBtn.textContent = '自动显示(5秒)';
+                    autoShowInterval = null;
+                    return;
+                }
+                
+                autoShowBtn.textContent = '停止自动';
+                showBlessingModal();
+                
+                autoShowInterval = setInterval(() => {
+                    showBlessingModal();
+                }, 5000);
+            }
+            
+            // 事件监听
+            showBlessingBtn.addEventListener('click', showBlessingModal);
+            nextBlessingBtn.addEventListener('click', getRandomBlessing);
+            closeModalBtn.addEventListener('click', hideBlessingModal);
+            autoShowBtn.addEventListener('click', startAutoShow);
+            
+            // 点击弹窗外部关闭
+            blessingModal.addEventListener('click', function(e) {
+                if (e.target === blessingModal) {
+                    hideBlessingModal();
+                }
+            });
+            
+            // 首次加载显示一条祝福
+            setTimeout(showBlessingModal, 1000);
+            
+            // ESC键关闭弹窗
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape' && blessingModal.classList.contains('active')) {
+                    hideBlessingModal();
+                }
+            });
+        });
+    </script>
+</body>
+</html>
